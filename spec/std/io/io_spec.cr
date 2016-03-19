@@ -673,4 +673,193 @@ describe IO do
       end
     end
   end
+
+  it "writes atomically with print" do
+    IO.pipe do |read, write|
+      write.fiber_safe = true
+      write.sync = false
+
+      spawn do
+        parallel(
+          10_000.times { write.print "abcdefghijklmnopqrstuvwxyz\n" },
+          10_000.times { write.print "1234567890\n" }
+        )
+        write.close
+      end
+
+      failed = nil
+
+      while line = read.gets
+        case line
+        when "abcdefghijklmnopqrstuvwxyz\n", "1234567890\n"
+        else
+          failed ||= line
+        end
+      end
+
+      if failed
+        fail "unexpected line: #{failed}"
+      end
+    end
+  end
+
+  it "writes atomically with puts string" do
+    IO.pipe do |read, write|
+      write.fiber_safe = true
+      write.sync = false
+
+      spawn do
+        parallel(
+          10_000.times { write.puts "abcdefghijklmnopqrstuvwxyz" },
+          10_000.times { write.puts "1234567890" }
+        )
+        write.close
+      end
+
+      failed = nil
+
+      while line = read.gets
+        case line
+        when "abcdefghijklmnopqrstuvwxyz\n", "1234567890\n"
+        else
+          failed ||= line
+        end
+      end
+
+      if failed
+        fail "unexpected line: #{failed}"
+      end
+    end
+  end
+
+  it "writes atomically with print string and flush on newline" do
+    IO.pipe do |read, write|
+      write.fiber_safe = true
+      write.sync = false
+      write.flush_on_newline = true
+
+      spawn do
+        parallel(
+          10_000.times { write.puts "abcdefghijklmnopqrstuvwxyz" },
+          10_000.times { write.puts "1234567890" }
+        )
+        write.close
+      end
+
+      failed = nil
+
+      while line = read.gets
+        case line
+        when "abcdefghijklmnopqrstuvwxyz\n", "1234567890\n"
+        else
+          failed ||= line
+        end
+      end
+
+      if failed
+        fail "unexpected line: #{failed}"
+      end
+    end
+  end
+
+  it "writes atomically with puts object" do
+    IO.pipe do |read, write|
+      write.fiber_safe = true
+      write.sync = false
+
+      spawn do
+        parallel(
+          10_000.times { write.puts 12345678910111213 },
+          10_000.times { write.puts 2345678910111213 }
+        )
+        write.close
+      end
+
+      failed = nil
+
+      while line = read.gets
+        case line
+        when "12345678910111213\n", "2345678910111213\n"
+        else
+          failed ||= line
+        end
+      end
+
+      if failed
+        fail "unexpected line: #{failed}"
+      end
+    end
+  end
+
+  it "writes atomically with puts multiple object" do
+    IO.pipe do |read, write|
+      write.fiber_safe = true
+      write.sync = false
+
+      spawn do
+        parallel(
+          10_000.times { write.puts 123456, 78910, 111213 },
+          10_000.times { write.puts 234567, 89101, 11213 }
+        )
+        write.close
+      end
+
+      failed = nil
+      lines = [] of String
+
+      while line = read.gets
+        lines << line
+        if lines.size == 3
+          line = lines.map(&.strip).join
+          lines.clear
+
+          case line
+          when "12345678910111213", "2345678910111213"
+          else
+            failed ||= line
+          end
+        end
+      end
+
+      if failed
+        fail "unexpected line: #{failed}"
+      end
+    end
+  end
+
+  it "writes atomically with print multiple object" do
+    IO.pipe do |read, write|
+      write.fiber_safe = true
+      write.sync = false
+
+      spawn do
+        parallel(
+          10_000.times { write.print 123456, 78910, 111213 },
+          10_000.times { write.print 234567, 89101, 11213 }
+        )
+        write.close
+      end
+
+      failed = nil
+      lines = [] of String
+
+      while line = read.gets
+        lines << line
+        if lines.size == 3
+          line = lines.join
+          lines.clear
+
+          case line
+          when "12345678910111213", "2345678910111213"
+          else
+            failed ||= line
+          end
+        end
+      end
+
+      if failed
+        fail "unexpected line: #{failed}"
+      end
+    end
+  end
 end
