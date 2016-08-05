@@ -318,7 +318,7 @@ describe "Semantic: def" do
       class Baz < Foo
       end
 
-      f = Bar.new || Baz.new
+      f = (Bar.new || Baz.new).as(Foo)
       f.bar
       ),
       "compile-time type is Foo+"

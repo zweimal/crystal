@@ -64,7 +64,8 @@ module Crystal
     end
 
     def type_merge_union_of(types : Array(Type))
-      union_of compact_types(types)
+      type_merge(types)
+      # union_of compact_types(types)
     end
 
     def compact_types(types)
@@ -115,19 +116,29 @@ module Crystal
     end
 
     def type_combine(types)
-      all_types = [types.shift] of Type
+      all_types = [] of Type
 
-      types.each do |t2|
-        not_found = all_types.each do |t1|
-          ancestor = t1.common_ancestor(t2)
+      i = 0
+      while i < types.size
+        type = types[i]
+        j = i + 1
+        found_ancestor = false
+        while j < types.size
+          other_type = types[j]
+          ancestor = type.common_ancestor(other_type)
           if ancestor
-            all_types.delete t1
-            all_types << ancestor.virtual_type
-            break
+            type = ancestor.virtual_type
+            types.delete_at(j)
+            found_ancestor = true
+          else
+            j += 1
           end
         end
-        if not_found
-          all_types << t2
+        if found_ancestor
+          types[i] = type
+        else
+          all_types << type
+          i += 1
         end
       end
 
@@ -195,26 +206,13 @@ module Crystal
         return self
       end
 
-      if depth == other.depth
-        my_superclass = @superclass
-        other_superclass = other.superclass
-
-        if my_superclass && other_superclass
-          return my_superclass.common_ancestor(other_superclass)
-        end
-      elsif depth > other.depth
-        my_superclass = @superclass
-        if my_superclass
-          return my_superclass.common_ancestor(other)
-        end
-      elsif depth < other.depth
-        other_superclass = other.superclass
-        if other_superclass
-          return common_ancestor(other_superclass)
-        end
+      if self.subclass_of?(other)
+        other.virtual_type
+      elsif other.subclass_of?(self)
+        self.virtual_type
+      else
+        nil
       end
-
-      nil
     end
 
     def common_ancestor(other : VirtualType)

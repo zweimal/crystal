@@ -166,7 +166,7 @@ describe "Semantic: class" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "types class and subclass as one type" do
+  it "doesn't type class and subclass as one type" do
     assert_type("
       class Foo
       end
@@ -178,7 +178,7 @@ describe "Semantic: class" do
       end
 
       a = Bar.new || Baz.new
-      ") { types["Foo"].virtual_type }
+      ") { union_of(types["Bar"], types["Baz"]) }
   end
 
   it "types class and subclass as one type" do

@@ -406,6 +406,10 @@ class Crystal::CodeGenVisitor
     value
   end
 
+  def upcast_distinct(value, to_type : VirtualMetaclassType, from_type : UnionType)
+    load(union_type_id(value))
+  end
+
   def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | VirtualMetaclassType, from_type)
     value
   end

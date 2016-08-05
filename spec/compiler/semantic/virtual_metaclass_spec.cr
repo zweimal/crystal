@@ -44,7 +44,7 @@ describe "Semantic: virtual metaclass" do
       class Baz < Foo
       end
 
-      bar = Bar.new || Baz.new
+      bar = (Bar.new || Baz.new).as(Foo)
       baz = bar.class.allocate
       ") { types["Foo"].virtual_type }
   end
@@ -147,5 +147,24 @@ describe "Semantic: virtual metaclass" do
 
       foo(Bar)
       ") { types["Bar"].metaclass }
+  end
+
+  it "..." do
+    assert_type(%(
+      class Foo
+        def clone
+          self.class.allocate
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      a = Pointer(Foo).malloc(0_u64)
+      a.value.clone
+      )) { types["Foo"].virtual_type }
   end
 end
