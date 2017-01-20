@@ -122,6 +122,9 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
+    # Program warnings that could be forwarded from another program
+    property warnings : Program::Warnings?
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -169,6 +172,9 @@ module Crystal
       program.color = color?
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
+      if warnings = self.warnings
+        program.warnings = warnings
+      end
       program
     end
 

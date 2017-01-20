@@ -184,6 +184,10 @@ module Crystal
         return node unless const.used?
       end
 
+      if target.is_a?(Var)
+        check_unused_var target, "variable"
+      end
+
       node.value = node.value.transform self
 
       unless node.value.type?
@@ -209,6 +213,29 @@ module Crystal
       node
     end
 
+    def check_unused_var(var, desc)
+      location = var.location
+      return unless location
+
+      filename = location.filename
+      return unless filename.is_a?(String)
+
+      return if var.special_var?
+      return if var.name.starts_with?('_')
+
+      # The variable will have its last observer set to
+      # its associated meta variable (this is done in MainVisitor)
+      meta_var = var.observers.try(&.last?)
+      return unless meta_var.is_a?(MetaVar)
+
+      return if meta_var.closured?
+
+      observers_size = meta_var.observers.try(&.size) || 0
+      return unless observers_size == 0
+
+      @program.warn(var.name, desc, filename, location.line_number, location.column_number)
+    end
+
     def transform(node : Global)
       if expanded = node.expanded
         return expanded
@@ -231,6 +258,11 @@ module Crystal
       transform_many node.args
 
       if (node_block = node.block) && !node_block.fun_literal
+        args = node_block.args
+        args.each do |arg|
+          check_unused_var arg, "block argument"
+        end
+
         node.block = node_block.transform(self)
       end
 

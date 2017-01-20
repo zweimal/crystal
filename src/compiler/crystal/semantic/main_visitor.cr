@@ -721,6 +721,7 @@ module Crystal
 
       if meta_var.closured?
         simple_var.bind_to(meta_var)
+        simple_var.closured = true
       end
 
       @vars[var_name] = simple_var

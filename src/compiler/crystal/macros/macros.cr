@@ -95,6 +95,10 @@ class Crystal::Program
 
     compiler = Compiler.new
 
+    # Gather warnings in the same place we are gathering now,
+    # to avoid duplicate warnings
+    compiler.warnings = program.warnings
+
     # Although release takes longer, once the bc is cached in .crystal
     # the subsequent times will make program execution faster.
     compiler.release = true
