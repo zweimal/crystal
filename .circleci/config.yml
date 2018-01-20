@@ -13,6 +13,18 @@ jobs:
       - run: bin/ci prepare_build
       - run: bin/ci build
 
+  build_linux_docker_executor:
+    docker:
+      - image: jhass/crystal-build-x86_64
+        environment:
+          LIBRARY_PATH: /usr/lib/crystal/lib/
+    steps:
+      - checkout
+      - run: make std_spec clean
+      - run: make crystal std_spec compiler_spec docs
+      - run: find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen
+      - run: ./bin/crystal tool format --check samples spec src
+
   build_linux:
     machine: true
     environment:
@@ -36,3 +48,4 @@ workflows:
     jobs:
       - build_osx
       - build_linux
+      - build_linux_docker_executor
